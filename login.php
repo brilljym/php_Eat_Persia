@@ -1,112 +1,99 @@
-<?php  
-session_start(); 
-if(isset($_SESSION['admin_sid']) || isset($_SESSION['customer_sid']))
-{
-	header("location:index.php");
+<?php
+require_once('classes/database.php');
+$con = new database();
+session_start();
+
+// If the user is already logged in, check their account type and redirect accordingly
+if (isset($_SESSION['username']) && isset($_SESSION['account_type'])) {
+  if ($_SESSION['account_type'] == 0) {
+    header('location:index.php');
+  } else if ($_SESSION['account_type'] == 1) {
+    header('location:user_account.php');
+  }
+  exit();
 }
-else{
+
+$error = ""; // Initialize error variable
+
+if (isset($_POST['login'])) {
+  $username = $_POST['user'];
+  $password = $_POST['pass'];
+  $result = $con->check($username, $password);
+
+  if ($result) {
+      $_SESSION['username'] = $result['user_name'];
+      $_SESSION['account_type'] = $result['account_type'];
+      $_SESSION['user_id'] = $result['user_id'];
+      $_SESSION['profilepicture'] = $result['user_profile_picture'];
+      // Redirect based on account type
+      if ($result['account_type'] == 0) {
+        header('location:index.php');
+      } else if ($result['account_type'] == 1) {
+        header('location:user_account.php');
+      }
+      exit();
+  } else {
+      $error = "Incorrect username or password. Please try again.";
+  }
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="msapplication-tap-highlight" content="no">
-  <title>Login</title>
-
-  <!-- Favicons-->
-  <link rel="icon" href="images/favicon/favicon_32x32.png" sizes="32x32">
-  <!-- Favicons-->
-  <link rel="apple-touch-icon-precomposed" href="images/favicon/apple-touch-icon-152x152.png">
-  <!-- For iPhone -->
-  <meta name="msapplication-TileColor" content="#00bcd4">
-  <meta name="msapplication-TileImage" content="images/favicon/mstile-144x144.png">
-  <!-- For Windows Phone -->
-
-
-  <!-- CORE CSS-->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Page</title>
+  <link rel="stylesheet" href="./bootstrap-5.3.3-dist/css/bootstrap.css">
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="./includes/style.css">
+  <style>
   
-  <link href="css/materialize.min.css" type="text/css" rel="stylesheet" media="screen,projection">
-  <link href="css/style.min.css" type="text/css" rel="stylesheet" media="screen,projection">
-    <!-- Custome CSS-->    
-    <link href="css/custom/custom.min.css" type="text/css" rel="stylesheet" media="screen,projection">
-  <link href="css/layouts/page-center.css" type="text/css" rel="stylesheet" media="screen,projection">
-
-  <!-- INCLUDED PLUGIN CSS ON THIS PAGE -->
-  <link href="js/plugins/perfect-scrollbar/perfect-scrollbar.css" type="text/css" rel="stylesheet" media="screen,projection">
-  
+  </style>
 </head>
+<body>
 
-<body class="cyan">
-  <!-- Start Page Loading -->
-  <div id="loader-wrapper">
-      <div id="loader"></div>        
-      <div class="loader-section section-left"></div>
-      <div class="loader-section section-right"></div>
-  </div>
-  <!-- End Page Loading -->
-
-
-
-  <div id="login-page" class="row">
-    <div class="col s12 z-depth-4 card-panel">
-      <form method="post" action="routers/router.php" class="login-form" id="form">
-        <div class="row">
-          <div class="input-field col s12 center">
-            <p class="center login-form-text">Login Panel</p>
-          </div>
-        </div>
-        <div class="row margin">
-          <div class="input-field col s12">
-            <i class="mdi-social-person-outline prefix"></i>
-            <input name="username" id="username" type="text">
-            <label for="username" class="center-align">Username</label>
-          </div>
-        </div>
-        <div class="row margin">
-          <div class="input-field col s12">
-            <i class="mdi-action-lock-outline prefix"></i>
-            <input name="password" id="password" type="password">
-            <label for="password">Password</label>
-          </div>
-        </div>
-        <div class="row">
-			<a href="javascript:void(0);" onclick="document.getElementById('form').submit();" class="btn waves-effect waves-light col s12">Login</a>
-          </div>
-		  		<div class="row">
-          <div class="input-field col s6 m6 l6">
-            <p class="margin medium-small"><a href="register.php">Register Now</a></p>
-          </div>         
-        </div>
-        </div>
-
-
-      </form>
+<div class="container-fluid login-container rounded shadow">
+  <h2 class="text-center login-heading mb-2">Login</h2>
+  
+  <form method="post">
+    <div class="form-group">
+      <!-- <label for="username">Username:</label> -->
+      <input type="text" class="form-control <?php if (!empty($error)) echo 'error-input'; ?>" name="user" placeholder="Enter username">
     </div>
-  </div>
+    <div class="form-group">
+      <!-- <label for="password">Password:</label> -->
+      <input type="password" class="form-control <?php if (!empty($error)) echo 'error-input'; ?>" name="pass" placeholder="Enter password">
+    </div>
+    <?php if (!empty($error)) : ?>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <?php echo $error; ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        <?php endif; ?>
 
+                        <div class="container">
+                          <div class="row gx-1">
+                            <div class="col">
+                            <input type="submit" class="btn btn-primary btn-block" value="Log In" name="login">
+                            </div>
+                            <div class="col">
+                            <a type="submit" class="btn btn-danger btn-block" href="signup.php">Sign Up</a>
+                            </div>
+                          </div>
+                        </div>
+   
+   
+  </form>
+</div>
 
-
-  <!-- ================================================
-    Scripts
-    ================================================ -->
-
-  <!-- jQuery Library -->
-  <script type="text/javascript" src="js/plugins/jquery-1.11.2.min.js"></script>
-  <!--materialize js-->
-  <script type="text/javascript" src="js/materialize.min.js"></script>
-  <!--scrollbar-->
-  <script type="text/javascript" src="js/plugins/perfect-scrollbar/perfect-scrollbar.min.js"></script>
-
-      <!--plugins.js - Some Specific JS codes for Plugin Settings-->
-    <script type="text/javascript" src="js/plugins.min.js"></script>
-    <!--custom-script.js - Add your own theme custom JS-->
-    <script type="text/javascript" src="js/custom-script.js"></script>
-
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="./bootstrap-5.3.3-dist/js/bootstrap.js"></script>
+<!-- Bootsrap JS na nagpapagana ng danger alert natin -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-<?php
-}
-?>

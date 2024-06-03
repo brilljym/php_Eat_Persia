@@ -4,6 +4,52 @@ include 'includes/wallet.php';
 
 	if($_SESSION['customer_sid']==session_id())
 	{
+    require_once('classes/database.php');
+$con = new database();
+session_start();
+
+if (!isset($_SESSION['username']) || $_SESSION['account_type'] != 0) {
+  header('location:login.php');
+  exit();
+}
+
+
+if (isset($_POST['delete'])) {
+    $id = $_POST['id'];
+    if ($con->delete($id)) {
+        header('location:index.php?status=success');
+    }else{
+        echo "Something went wrong.";
+    }
+}
+
+// For Pagination
+
+// For Pagination
+
+// For Chart
+$data = $con->getusercount();
+
+// Check if the data is an associative array and contains the key 'male'
+if (isset($data['male_count']) or isset( $dataf['female_count'])) {
+    $male = $data['male_count'];
+    $female = $data['female_count'];
+} else {
+    // Handle the case where 'male' key is not found in the returned data
+    $male = 0; // or set an appropriate default value or handle the error
+    $female = 0;
+}
+
+// Create the dataPoints array
+$dataPoints = array( 
+    array("y" => $male, "label" => "Male" ),
+    array("y" => $female, "label" => "Female" ),
+);
+
+$datapoints = array(
+	array("label"=> "Male", "y"=> $male),
+	array("label"=> "Female", "y"=> $female),
+);
 		?>
 <!DOCTYPE html>
 <html lang="en">
